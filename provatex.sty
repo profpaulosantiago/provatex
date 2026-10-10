@@ -5,17 +5,35 @@
 % Uma correção feita aqui vale para todas as provas que usam o estilo.
 %
 % Uso, no arquivo da prova:
-%   \documentclass[brazil, 11pt]{exam}
+%   \documentclass[11pt]{exam}
 %   \usepackage{provatex}
 %   \input{config}
+%
+% Opções de estilo:
+%   \usepackage[maiusculas]{provatex}  letras das alternativas A, B, C... (padrão)
+%   \usepackage[minusculas]{provatex}  letras das alternativas a, b, c...
+%
+% Compilar com XeLaTeX (não com pdflatex), porque a fonte Open Sans é
+% carregada da pasta fontes/ do próprio projeto.
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{provatex}[2026/10/10 Estilo de provas do IFCE]
+
+% ---------------------------------------------------------------------------
+% Opções de estilo
+% ---------------------------------------------------------------------------
+% Letras das alternativas. O padrão é maiúsculas, iguais às do cartão-resposta
+% do EvalBee. A mesma escolha vale para a lista de respostas do professor.
+\newcommand{\provatex@letra}{\Alph}
+\DeclareOption{maiusculas}{\renewcommand{\provatex@letra}{\Alph}}
+\DeclareOption{minusculas}{\renewcommand{\provatex@letra}{\alph}}
+\DeclareOption*{\PackageWarning{provatex}{Opção desconhecida: \CurrentOption}}
+\ProcessOptions\relax
 
 % ---------------------------------------------------------------------------
 % Versão com respostas (para o professor)
 % ---------------------------------------------------------------------------
 % Compile com:
-%   pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+%   xelatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
 % Sem essa definição, sai a versão do estudante, sem respostas.
 \ifdefined\comrespostas
     \printanswers
@@ -24,9 +42,12 @@
 % ---------------------------------------------------------------------------
 % Pacotes
 % ---------------------------------------------------------------------------
-\RequirePackage[utf8]{inputenc}
-\RequirePackage[T1]{fontenc}
-\RequirePackage[brazil]{babel}
+% Português do Brasil pela definição embutida no próprio babel
+% (babel-pt-BR.ini). Assim a prova não depende do arquivo brazil.ldf,
+% que nem toda instalação do TeX traz.
+\RequirePackage[provide=*]{babel}
+\babelprovide[import, main]{brazilian}
+\RequirePackage{fontspec}
 \RequirePackage{multicol}
 \RequirePackage{amsmath}
 \RequirePackage{multirow}
@@ -38,6 +59,7 @@
 \RequirePackage{enumitem} % Personalização de listas
 \RequirePackage{colortbl} % Necessário para \cellcolor
 \RequirePackage{calc}
+\RequirePackage{etoolbox} % Para acrescentar o recuo ao comando \question
 
 % ---------------------------------------------------------------------------
 % Dados da prova (preenchidos em config.tex)
@@ -83,7 +105,19 @@
 \setlength{\columnsep}{5mm}
 \setlength{\columnseprule}{0mm}
 
-% Fonte
+% Fonte: Open Sans, a mesma da logomarca do IFCE.
+% Os arquivos da fonte ficam na pasta fontes/ do projeto (licença SIL Open
+% Font License, que permite distribuí-los), então a prova sai igual em
+% qualquer computador, sem instalar a fonte no sistema.
+\setsansfont{OpenSans}[
+    Scale          = 0.9,      % a Open Sans é grande; 0.9 aproxima do tamanho padrão
+    Path           = fontes/,
+    Extension      = .ttf,
+    UprightFont    = *-Regular,
+    BoldFont       = *-Bold,
+    ItalicFont     = *-Italic,
+    BoldItalicFont = *-BoldItalic,
+]
 \renewcommand{\familydefault}{\sfdefault}
 
 % Numeração das páginas
@@ -108,7 +142,7 @@
 % é ativado pelo \choiceshook (ver \ativaRegistro mais abaixo).
 \newcommand{\Respostas}{}
 \newcommand{\registraResposta}{%
-    \xdef\Respostas{\Respostas\noexpand\itemResposta{\arabic{question}}{\Alph{choice}}}%
+    \xdef\Respostas{\Respostas\noexpand\itemResposta{\arabic{question}}{\provatex@letra{choice}}}%
 }
 \newcommand{\ativaRegistro}{%
     \let\CorrectChoiceOriginal\CorrectChoice
@@ -132,7 +166,19 @@
 % Questões
 % ---------------------------------------------------------------------------
 % Unidade da pontuação
-\pointpoints{\tiny ponto}{\tiny pontos}
+\pointpoints{ponto}{pontos}
+
+% Medidas da barra da questão
+\newlength{\larguranumero} % largura do quadro preto com o número
+\newlength{\recuoquestao}  % recuo da 1ª linha do enunciado: alinha com o início da barra cinza
+\newlength{\espacotitulo}  % espaço entre a barra e o enunciado
+\setlength{\espacotitulo}{1.15ex}
+% As medidas em "em" e "ex" dependem da fonte, por isso são calculadas
+% no início do documento, quando a fonte da prova já está ativa.
+\AtBeginDocument{%
+    \setlength{\larguranumero}{1.5em}%
+    \setlength{\recuoquestao}{\larguranumero}%
+}
 
 % Barra da questão: número em fundo preto, pontuação em barra cinza
 \qformat{%
@@ -141,15 +187,32 @@
     \setlength{\tabcolsep}{0pt}
     \begin{tabularx}{\columnwidth}{
         @{}% Remove padding extra da esquerda
-        >{\centering\arraybackslash}p{1.5em}% Coluna para o número da questão, largura fixa
+        >{\centering\arraybackslash}p{\larguranumero}% Coluna para o número da questão, largura fixa
         >{\raggedleft\arraybackslash}X@{}% Coluna para a barra cinza com pontos, expande para o resto, remove padding extra da direita
     }
         \cellcolor{black}{% Ajusta o número da questão
             \raisebox{-0.25ex}{\color{white}\textbf{\thequestion}}%
         } & \cellcolor{lightgray}{% Ajusta a pontuação
-            \raisebox{0.1ex}{\tiny\thepoints\hspace{0.5em}}%
+            \raisebox{0.1ex}{\scriptsize\thepoints\hspace{0.5em}}%
         } \\
     \end{tabularx}%
+    % Régua invisível que aprofunda a linha da barra: garante o mesmo
+    % espaço entre a barra e o enunciado em todas as questões
+    \rule[-\dimexpr\dp\strutbox+\espacotitulo\relax]{0pt}{0pt}%
+}
+
+% Recuo automático da 1ª linha do enunciado. A classe exam monta o título
+% da questão no comando interno \item@points@pageinfo (usado também por
+% \part e \subpart); o recuo é acrescentado só no nível "question".
+\newcommand{\provatex@recuo}{%
+    \ifx\@queslevel\ques@ref
+        \leavevmode\hbox to \recuoquestao{}%
+    \fi
+    \ignorespaces
+}
+\apptocmd{\item@points@pageinfo}{\provatex@recuo}{}{%
+    \PackageWarning{provatex}{Não foi possível ativar o recuo automático
+        do enunciado das questões}%
 }
 
 % Círculo decorativo das letras das alternativas
@@ -161,8 +224,8 @@
     fill=black, %
     text=white] (char) {\textbf{\footnotesize #1}};} \ }
 
-% Letras das alternativas (A, B, C...), iguais às do cartão-resposta
-\renewcommand{\choicelabel}{\circled{\Alph{choice}}}
+% Letras das alternativas: maiúsculas ou minúsculas, conforme a opção de estilo
+\renewcommand{\choicelabel}{\circled{\provatex@letra{choice}}}
 
 % Recuo das alternativas e ativação do gabarito automático
 \renewcommand{\choiceshook}{%
@@ -173,11 +236,21 @@
     \setlength{\parsep}{\baselineskip - 1em}
 }
 
+% Traço fino e cinza que preenche o espaço disponível, na altura do meio
+% das letras minúsculas (não na linha de base, como um sublinhado)
+\newcommand{\tracomeio}{%
+    {\color{gray}\leaders\hrule height 0.58ex depth -0.5ex\hfill}%
+}
+
 % Espaço reservado no fim das questões
 \newcommand{\espacocalculos}{%
-    \begin{center}
-        ---------[ espaço para cálculos ]---------
-    \end{center}\vfill\null
+    \par\vspace{1ex}
+    \noindent\makebox[\columnwidth]{%
+        \makebox[0.7\columnwidth]{%
+            \tracomeio\enspace
+            {\small espaço para cálculos}%
+            \enspace\tracomeio}}%
+    \par\vfill\null
 }
 
 % ---------------------------------------------------------------------------
@@ -215,7 +288,8 @@
 \newenvironment{orientacoes}{%
     \begin{tcolorbox}[width=\linewidth]
         \textbf{Orientações} \tcblower
-        \begin{itemize}[leftmargin=*, itemindent=0pt]
+        \setlength{\parskip}{0pt}% espaço entre parágrafos só neste quadro
+        \begin{itemize}[leftmargin=*, itemindent=0pt, itemsep=0.8ex, parsep=0pt, topsep=0pt]
 }{%
         \end{itemize}
         \par

@@ -4,13 +4,13 @@
 % Aqui ficam só as orientações e as questões.
 %
 % Versão do estudante:
-%   pdflatex prova.tex
+%   xelatex prova.tex
 % Versão do professor, com respostas:
-%   pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+%   xelatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
 % Ou, para gerar as duas de uma vez:
 %   make
-\documentclass[brazil, 11pt]{exam}
-\usepackage{provatex}
+\documentclass[11pt]{exam}
+\usepackage{provatex} % [minusculas] para alternativas a, b, c...
 \input{config}
 
 \begin{document}
@@ -50,11 +50,9 @@ Em seguida, são apresentadas as opções para escolha da resposta.
 
 
 \begin{question}[1] % Enem 2012 PPL
-\begin{minipage}{\linewidth}\vspace{1ex}\hspace{1em}
 Esta é uma questão de exemplo. Normalmente há um texto que pode ser acompanhado de uma figura, uma tabela, uma lista numerada, ou qualquer outra forma de apresentação da informação. \\
 Em seguida, são apresentadas as opções para escolha da resposta.
 
-\vspace{1ex}
 \begin{choices}
     \CorrectChoice Este é o item correto.
     \choice Um item qualquer para ilustrar uma lista de opções.
@@ -62,8 +60,6 @@ Em seguida, são apresentadas as opções para escolha da resposta.
     \choice É possível ter uma quantidade maior de itens.
     \choice Um item para encerrar o exemplo.
 \end{choices}
-
-\end{minipage}
 \end{question}
 
 \espacocalculos

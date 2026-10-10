@@ -17,12 +17,12 @@ estudante: prova.pdf
 professor: prova-respostas.pdf
 
 prova.pdf: $(FONTES)
-	pdflatex prova.tex
-	pdflatex prova.tex
+	xelatex prova.tex
+	xelatex prova.tex
 
 prova-respostas.pdf: $(FONTES)
-	pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
-	pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+	xelatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+	xelatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
 
 limpa:
 	rm -f *.aux *.log *.out

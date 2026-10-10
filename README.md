@@ -13,6 +13,7 @@ versão do estudante e a versão do professor, com as respostas.
 | `provatex.sty` | Aparência: pacotes, margens, cabeçalho, questões, alternativas e gabarito |
 | `logo-ifce-bat-11pt.pdf` | Logo do campus, usado no cabeçalho |
 | `gabarito.pdf` | Cartão-resposta gerado pelo EvalBee |
+| `fontes/` | Fonte Open Sans (regular, negrito, itálico e negrito itálico) e sua licença |
 | `Makefile` | Gera as duas versões da prova com um comando |
 
 ## Como compilar
@@ -33,8 +34,8 @@ O resultado é:
 Sem o `make`, os comandos equivalentes são:
 
 ```bash
-pdflatex prova.tex
-pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+xelatex prova.tex
+xelatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
 ```
 
 Rode cada um duas vezes. Para apagar os arquivos auxiliares do LaTeX
@@ -43,7 +44,7 @@ Rode cada um duas vezes. Para apagar os arquivos auxiliares do LaTeX
 ## Como fazer uma nova prova
 
 1. Copie `prova.tex` e `config.tex` para uma pasta nova, junto com
-   `provatex.sty`, o logo e o cartão-resposta.
+   `provatex.sty`, a pasta `fontes/`, o logo e o cartão-resposta.
 2. Ajuste os dados da turma em `config.tex`.
 3. Gere o cartão-resposta no EvalBee com o número de questões da prova e
    salve como `gabarito.pdf` (ou indique outro nome em `config.tex`).
@@ -71,6 +72,21 @@ Enunciado da questão.
 Basta marcar a alternativa certa com `\CorrectChoice`. O gabarito é montado
 sozinho a partir dessas marcações.
 
+A primeira linha do enunciado recebe recuo automático, alinhada com o início
+da barra cinza do título.
+
+## Opções de estilo
+
+As letras das alternativas são maiúsculas (A, B, C...), iguais às do
+cartão-resposta do EvalBee. Para usar minúsculas (a, b, c...), carregue o
+estilo com a opção `minusculas` em `prova.tex`:
+
+```latex
+\usepackage[minusculas]{provatex}
+```
+
+A lista de respostas da versão do professor segue a mesma escolha.
+
 Depois da última questão, antes de `\end{questions}`, ficam dois comandos:
 
 - `\espacocalculos`: reserva o espaço para cálculos no fim da coluna.
@@ -79,9 +95,26 @@ Depois da última questão, antes de `\end{questions}`, ficam dois comandos:
 
 ## Requisitos
 
-Uma instalação do TeX Live com os pacotes usados em `provatex.sty`. No
-Fedora, todos podem ser instalados de uma vez com:
+A prova é compilada com **XeLaTeX**, porque a fonte Open Sans é carregada
+da pasta `fontes/` do próprio projeto. Assim, ela sai igual em qualquer
+computador, sem instalar a fonte no sistema. O português do Brasil vem da
+definição embutida no próprio `babel`, sem depender do arquivo `brazil.ldf`.
+
+No Fedora, os pacotes LaTeX usados podem ser instalados de uma vez com:
 
 ```bash
-sudo dnf install 'tex(exam.cls)' 'tex(inputenc.sty)' 'tex(fontenc.sty)' 'tex(cm-super-t1.enc)' 'tex(babel.sty)' 'tex(brazil.ldf)' 'tex(multicol.sty)' 'tex(amsmath.sty)' 'tex(multirow.sty)' 'tex(tabularx.sty)' 'tex(siunitx.sty)' 'tex(tikz.sty)' 'tex(tcolorbox.sty)' 'tex(graphicx.sty)' 'tex(enumitem.sty)' 'tex(colortbl.sty)' 'tex(calc.sty)' 'tex(geometry.sty)'
+sudo dnf install texlive-xetex 'tex(fontspec.sty)' 'tex(exam.cls)' 'tex(babel.sty)' 'tex(multicol.sty)' 'tex(amsmath.sty)' 'tex(multirow.sty)' 'tex(tabularx.sty)' 'tex(siunitx.sty)' 'tex(tikz.sty)' 'tex(tcolorbox.sty)' 'tex(graphicx.sty)' 'tex(enumitem.sty)' 'tex(colortbl.sty)' 'tex(calc.sty)' 'tex(geometry.sty)'
 ```
+
+Opcional, mas recomendado: as regras de divisão silábica do português, que
+deixam o texto justificado mais uniforme. Sem elas a prova compila do mesmo
+jeito, só sem dividir palavras no fim das linhas.
+
+```bash
+sudo dnf install texlive-hyphen-portuguese
+```
+
+## Licença da fonte
+
+A Open Sans é distribuída sob a SIL Open Font License 1.1, cujo texto está
+em `fontes/OFL.txt`.
