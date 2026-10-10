@@ -1,0 +1,10 @@
+# Arquivos auxiliares do LaTeX
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Versão do professor: contém as respostas, não deve ir para o repositório
+prova-respostas.pdf

@@ -1,0 +1,236 @@
+% provatex.sty — estilo das provas do IFCE
+%
+% Este arquivo reúne toda a aparência da prova: pacotes, margens, cabeçalho,
+% barra das questões, alternativas, quadro de orientações e gabarito.
+% Uma correção feita aqui vale para todas as provas que usam o estilo.
+%
+% Uso, no arquivo da prova:
+%   \documentclass[brazil, 11pt]{exam}
+%   \usepackage{provatex}
+%   \input{config}
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{provatex}[2026/10/10 Estilo de provas do IFCE]
+
+% ---------------------------------------------------------------------------
+% Versão com respostas (para o professor)
+% ---------------------------------------------------------------------------
+% Compile com:
+%   pdflatex -jobname=prova-respostas "\def\comrespostas{}\input{prova}"
+% Sem essa definição, sai a versão do estudante, sem respostas.
+\ifdefined\comrespostas
+    \printanswers
+\fi
+
+% ---------------------------------------------------------------------------
+% Pacotes
+% ---------------------------------------------------------------------------
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[brazil]{babel}
+\RequirePackage{multicol}
+\RequirePackage{amsmath}
+\RequirePackage{multirow}
+\RequirePackage{tabularx}
+\RequirePackage{siunitx}
+\RequirePackage{tikz}
+\RequirePackage{tcolorbox}
+\RequirePackage{graphicx}
+\RequirePackage{enumitem} % Personalização de listas
+\RequirePackage{colortbl} % Necessário para \cellcolor
+\RequirePackage{calc}
+
+% ---------------------------------------------------------------------------
+% Dados da prova (preenchidos em config.tex)
+% ---------------------------------------------------------------------------
+% Cada comando guarda um dado usado no cabeçalho ou no quadro de orientações.
+\newcommand{\curso}[1]{\def\provatex@curso{#1}}
+\newcommand{\disciplina}[1]{\def\provatex@disciplina{#1}}
+\newcommand{\atividade}[1]{\def\provatex@atividade{#1}}
+\newcommand{\professor}[1]{\def\provatex@professor{#1}}
+\newcommand{\periodo}[1]{\def\provatex@periodo{#1}}
+\newcommand{\logo}[1]{\def\provatex@logo{#1}}
+\newcommand{\cartaoresposta}[1]{\def\provatex@cartaoresposta{#1}}
+
+% Valores padrão, usados quando config.tex não define o dado
+\curso{Curso}
+\disciplina{Disciplina}
+\atividade{Prova}
+\professor{Professor}
+\periodo{Período}
+\logo{logo-ifce-bat-11pt.pdf}
+\cartaoresposta{gabarito.pdf}
+
+% ---------------------------------------------------------------------------
+% Layout da página
+% ---------------------------------------------------------------------------
+\RequirePackage[a4paper,
+                top=20mm,
+                bottom=15mm,
+                left=15mm,
+                right=15mm,
+                footskip=8mm]{geometry}
+
+% Parágrafos
+\setlength{\parskip}{1em}
+\renewcommand{\questionshook}{%
+    \setlength{\leftmargin}{0em}%
+    \setlength{\labelwidth}{-\labelsep}%
+    \setlength{\parindent}{1.5em}
+    \setlength{\parsep}{1ex}
+}
+
+% Colunas
+\setlength{\columnsep}{5mm}
+\setlength{\columnseprule}{0mm}
+
+% Fonte
+\renewcommand{\familydefault}{\sfdefault}
+
+% Numeração das páginas
+\footer{}{\thepage}{}
+
+% ---------------------------------------------------------------------------
+% Unidades de medida (siunitx)
+% ---------------------------------------------------------------------------
+\sisetup{per-mode = symbol,
+    output-decimal-marker = {,},
+    inter-unit-product=\ensuremath{{}\cdot{}}}
+\DeclareSIUnit{\rev}{rev}
+\DeclareSIUnit{\volta}{voltas}
+\DeclareSIUnit{\boe}{boe}
+\DeclareSIUnit{\batimentos}{batimentos}
+
+% ---------------------------------------------------------------------------
+% Gabarito automático
+% ---------------------------------------------------------------------------
+% Cada \CorrectChoice registra sozinho a letra certa.
+% \CorrectChoice só existe dentro do ambiente choices, por isso o registro
+% é ativado pelo \choiceshook (ver \ativaRegistro mais abaixo).
+\newcommand{\Respostas}{}
+\newcommand{\registraResposta}{%
+    \xdef\Respostas{\Respostas\noexpand\itemResposta{\arabic{question}}{\Alph{choice}}}%
+}
+\newcommand{\ativaRegistro}{%
+    \let\CorrectChoiceOriginal\CorrectChoice
+    \def\CorrectChoice{\CorrectChoiceOriginal\registraResposta}%
+}
+\newcommand{\itemResposta}[2]{\par\noindent #1. #2\par}
+\newcommand{\imprimeRespostas}{\Respostas}
+
+% Relação de respostas certas: só aparece na versão com respostas.
+% Usar no fim das questões, antes de \end{questions}.
+\newcommand{\listaderespostas}{%
+    \ifprintanswers
+        Respostas
+        \begin{multicols}{2}
+            \imprimeRespostas
+        \end{multicols}
+    \fi
+}
+
+% ---------------------------------------------------------------------------
+% Questões
+% ---------------------------------------------------------------------------
+% Unidade da pontuação
+\pointpoints{\tiny ponto}{\tiny pontos}
+
+% Barra da questão: número em fundo preto, pontuação em barra cinza
+\qformat{%
+    \hspace{-1ex}%
+    \renewcommand{\arraystretch}{1}
+    \setlength{\tabcolsep}{0pt}
+    \begin{tabularx}{\columnwidth}{
+        @{}% Remove padding extra da esquerda
+        >{\centering\arraybackslash}p{1.5em}% Coluna para o número da questão, largura fixa
+        >{\raggedleft\arraybackslash}X@{}% Coluna para a barra cinza com pontos, expande para o resto, remove padding extra da direita
+    }
+        \cellcolor{black}{% Ajusta o número da questão
+            \raisebox{-0.25ex}{\color{white}\textbf{\thequestion}}%
+        } & \cellcolor{lightgray}{% Ajusta a pontuação
+            \raisebox{0.1ex}{\tiny\thepoints\hspace{0.5em}}%
+        } \\
+    \end{tabularx}%
+}
+
+% Círculo decorativo das letras das alternativas
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+    \node[shape=circle, %
+    draw, %
+    inner sep=0.30pt, %
+    minimum size=1.0em, %
+    fill=black, %
+    text=white] (char) {\textbf{\footnotesize #1}};} \ }
+
+% Letras das alternativas (A, B, C...), iguais às do cartão-resposta
+\renewcommand{\choicelabel}{\circled{\Alph{choice}}}
+
+% Recuo das alternativas e ativação do gabarito automático
+\renewcommand{\choiceshook}{%
+    \ativaRegistro
+    \setlength{\leftmargin}{2em}%
+    \setlength{\labelsep}{0em}%
+    \setlength{\itemsep}{0pt}
+    \setlength{\parsep}{\baselineskip - 1em}
+}
+
+% Espaço reservado no fim das questões
+\newcommand{\espacocalculos}{%
+    \begin{center}
+        ---------[ espaço para cálculos ]---------
+    \end{center}\vfill\null
+}
+
+% ---------------------------------------------------------------------------
+% Cabeçalho
+% ---------------------------------------------------------------------------
+\tcbset{fontupper=\small,colback=white,colframe=black,boxrule=0.25pt}
+
+% Alinhamento dos elementos do cabeçalho
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+
+\renewcommand{\maketitle}{%
+    \noindent
+        \begin{tabularx}{\linewidth}{Y Z}
+            \multirow{4}{*}{\includegraphics{\provatex@logo}}
+            & \\
+            & \provatex@curso \\
+            & \provatex@atividade\ de \provatex@disciplina\\
+            & \provatex@professor\ $\cdot$ \provatex@periodo \\
+        \end{tabularx}
+        \vspace{-2ex}
+    % Identificação do estudante e data
+    \begin{tcolorbox}[width=\linewidth]
+        Estudante: \hfill  Data: \makebox[2.5cm]{}
+    \end{tcolorbox}
+    \vspace{1ex}
+}
+
+% ---------------------------------------------------------------------------
+% Quadro de orientações
+% ---------------------------------------------------------------------------
+% Ocupa a primeira coluna: orientações, cartão-resposta e "Boa prova!".
+% Cada orientação entra como \item. Ao final, o quadro passa para a
+% segunda coluna, onde começam as questões.
+\newenvironment{orientacoes}{%
+    \begin{tcolorbox}[width=\linewidth]
+        \textbf{Orientações} \tcblower
+        \begin{itemize}[leftmargin=*, itemindent=0pt]
+}{%
+        \end{itemize}
+        \par
+        \vspace{5mm}
+        \includegraphics[width=\columnwidth,keepaspectratio]{\provatex@cartaoresposta}
+        \par
+        \vspace{5mm}
+        \begin{center}
+            Boa prova!
+        \end{center}
+    \end{tcolorbox}
+    \par
+    \vfil
+    \null
+    \columnbreak
+}
+
+\endinput
